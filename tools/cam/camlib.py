@@ -231,6 +231,15 @@ def stream_restore(released):
     return r is not None and r.returncode == 0
 
 
+def change_refused():
+    """The host's change hook before a command that may change the camera: None when the command may run, else the
+    hook's reason for refusing it."""
+    r = _hook('MICROCAM_HOOK_CHANGE', 10)
+    if r is None or r.returncode == 0:
+        return None
+    return (r.stdout + r.stderr).strip() or f'refused by MICROCAM_HOOK_CHANGE (exit {r.returncode})'
+
+
 def state_extra():
     """The host's state hook: (pids allowed to hold the video node, anomaly lines, info lines)."""
     r = _hook('MICROCAM_HOOK_STATE', 3)

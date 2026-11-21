@@ -30,6 +30,7 @@ DEFAULTS = {
     'MICROCAM_HOOK_STREAM_RELEASE': '',
     'MICROCAM_HOOK_STREAM_RESTORE': '',
     'MICROCAM_HOOK_STATE': '',
+    'MICROCAM_HOOK_CHANGE': '',
     # the build's inputs, made by docs/INSTALL.md's steps in the git-ignored work/ here
     'MICROCAM_SYSROOT': os.path.join(REPO, 'work', 'dump'),  # the camera's dump, unpacked (install.py dump)
     'MICROCAM_LINK_LIBS': os.path.join(REPO, 'work', 'build', 'linklibs'),  # mk-linklibs.sh
