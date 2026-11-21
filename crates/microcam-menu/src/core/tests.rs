@@ -543,7 +543,7 @@ fn the_start_asks_for_the_scene_and_shows_the_mode_for_two_seconds() {
     assert_eq!(r.cam.log, [Request::Hello { take: false }], "the outputs' facts come in the snapshot");
     assert_eq!(r.core.st.link, Link::Owner);
     assert_eq!(*r.screen(), Screen::Live);
-    assert_eq!(r.core.flash_text().as_deref(), Some("2160p30 · ×1.0 · SD 12,1 ГБ"));
+    assert_eq!(r.core.flash_text().as_deref(), Some("2160p30 · ×1,0 · SD 13,0 ГБ"));
     assert_eq!(r.core.st.own, Own { lang: Lang::Ru, cross: true }, "the menu's own from its record");
     r.wait(1999);
     assert!(r.core.flash_text().is_some());
@@ -686,9 +686,9 @@ fn exposure_rows_follow_what_microcamd_allows() {
     let mut r = Rig::new();
     r.open(&["Экспозиция"]);
     assert_eq!(r.names(), ["Автоэкспозиция", "Сдвиг экспозиции", "Замок экспозиции", "Баланс белого"]);
-    assert_eq!([r.value("Автоэкспозиция"), r.value("Сдвиг экспозиции"), r.value("Замок экспозиции"), r.value("Баланс белого")], ["вкл", "0.0", "выкл", "авто"]);
+    assert_eq!([r.value("Автоэкспозиция"), r.value("Сдвиг экспозиции"), r.value("Замок экспозиции"), r.value("Баланс белого")], ["вкл", "0,0", "выкл", "авто"]);
     r.keys(&[Down, Right, Right, Right, Menu, Menu]);
-    assert_eq!(r.value("Сдвиг экспозиции"), "+0.6", "two steps of 0.3");
+    assert_eq!(r.value("Сдвиг экспозиции"), "+0,6", "two steps of 0.3");
     r.press(Up);
     r.press(Right);
     assert!(!r.on("auto-exposure"), "a row of two values toggles in place");
@@ -714,7 +714,7 @@ fn the_exposure_slider_alone_in_its_section_has_no_neighbours() {
     r.open(&["Экспозиция", "Сдвиг экспозиции"]);
     r.keys(&[Left, Down, Up]);
     assert_eq!(*r.screen(), Screen::Slider { item: Item::ExposureBias, round: Item::ExposureBias });
-    assert_eq!(r.core.number(Item::ExposureBias).as_deref(), Some("−0.3"));
+    assert_eq!(r.core.number(Item::ExposureBias).as_deref(), Some("−0,3"));
     r.press(Picture);
     assert_eq!(*r.screen(), Screen::Slider { item: Item::Contrast, round: Item::Contrast }, "◐ from another number starts its round");
 }
@@ -742,12 +742,12 @@ fn ae_and_awb_lock_and_unlock_with_a_chip_while_locked() {
 fn the_zoom_keys_step_by_a_tenth_and_hold_repeats() {
     let mut r = Rig::new();
     r.press(ZoomIn);
-    assert_eq!(r.core.flash_text().as_deref(), Some("×1.1"));
+    assert_eq!(r.core.flash_text().as_deref(), Some("×1,1"));
     r.hold(ZoomIn, 4);
-    assert_eq!(r.core.flash_text().as_deref(), Some("×1.6"));
+    assert_eq!(r.core.flash_text().as_deref(), Some("×1,6"));
     r.hold(ZoomIn, 60);
     assert_eq!(r.int("zoom"), 40);
-    assert_eq!(r.core.flash_text().as_deref(), Some("×5.0"));
+    assert_eq!(r.core.flash_text().as_deref(), Some("×5,0"));
     r.wait(2000);
     assert_eq!(r.core.flash_text(), None, "the factor for 2 s after the last press");
     r.open(&["Картинка"]);
@@ -828,7 +828,7 @@ fn display_levels_are_a_list_of_four_with_words_of_their_own() {
     r.open(&["Наложения"]);
     assert_eq!(r.names(), ["Перекрестие", "Добавить линию", "Убрать все линии", "Показ на HDMI", "Показ на USB", "В записи и снимке"]);
     let lvl = r.cam.list.get("level-media").unwrap().value.clone();
-    assert_eq!(r.value("В записи и снимке"), format!("{} ›", text::LEVELS[match lvl { Value::Int(i) => i as usize, _ => 0 }].get(Lang::Ru)));
+    assert_eq!(r.value("В записи и снимке"), format!("{} ›", Lang::Ru.words().levels[match lvl { Value::Int(i) => i as usize, _ => 0 }].name));
     r.to("Показ на HDMI");
     r.press(Right);
     assert_eq!(r.names(), ["только картинка", "с линиями", "с плашками", "всё"]);
@@ -910,7 +910,7 @@ fn the_card_is_formatted_after_a_question() {
     let mut r = Rig::new();
     r.open(&["Система", "SD-карта"]);
     assert_eq!(r.names(), ["Свободно", "Режим картридера", "Форматировать"]);
-    assert_eq!(r.value("Свободно"), "12,1 из 29,0 ГБ");
+    assert_eq!(r.value("Свободно"), "13,0 из 31,1 ГБ");
     assert_eq!(r.chosen(), "Режим картридера", "the state row is not chosen");
     r.press(Down);
     r.press(Right);
@@ -922,7 +922,7 @@ fn the_card_is_formatted_after_a_question() {
     assert_eq!(r.asked(), [Request::Format]);
     assert_eq!(r.toast().as_deref(), Some("SD-карта отформатирована"));
     assert_eq!(r.core.st.cam.files.total, 0);
-    assert_eq!(r.value("Свободно"), "28,9 из 29,0 ГБ", "the space told after the format");
+    assert_eq!(r.value("Свободно"), "31,0 из 31,1 ГБ", "the space told after the format");
     r.cam.card = Card::None;
     r.event(Event::Card { card: CardInfo { at: Card::None, ..CardInfo::default() } });
     assert_eq!(r.names(), ["Карты нет", "Режим картридера"], "the mode is kept without a card too");

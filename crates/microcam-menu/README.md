@@ -9,7 +9,9 @@ the scene the menu sends it.
   and the requests come out. Camera values are shown as microcamd confirms them; the screens, the lines, the language
   and the crosshair are the menu's own (the last two kept in the record microcamd stores for it).
 - `menu` — the tables: the sections, their items, which control each shows.
-- `text` — every word, Russian and English.
+- `text` — the languages: each is a file in `text/` with every word and whole sentence of the menu as the fields of one
+  `Words`, its own name and its decimal mark; a language that lacks one does not build. A new language: its file, and
+  its name in `Lang`.
 - `view` — the state as the whole scene tree; `presenter` — the tree onto the outputs, a commit once the last is shown;
   `main` — the socket and the loop.
 

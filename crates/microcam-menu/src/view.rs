@@ -9,7 +9,7 @@ use microcam_draw::render::{measure, Fonts};
 
 use crate::core::{frozen_half_id, frozen_id, Core, Dir, Freeze, Gallery, GalleryView, Origin, Screen, Toast};
 use crate::menu::{Item, Kind as ItemKind};
-use crate::text::{self, Lang, T};
+use crate::text::{self, Words};
 
 const PANEL: &str = "#111111bb";
 const TEXT: &str = "#eeeeee";
@@ -114,12 +114,8 @@ pub struct View<'a> {
 }
 
 impl View<'_> {
-    fn lang(&self) -> Lang {
-        self.core.st.own.lang
-    }
-
-    fn w(&self, t: T) -> &'static str {
-        t.get(self.lang())
+    fn w(&self) -> &'static Words {
+        self.core.words()
     }
 
     fn width(&self, font: f32, s: &str) -> f32 {
@@ -127,7 +123,7 @@ impl View<'_> {
     }
 
     /// A hint line from (`x`, `y`): each key bright, what it does dim, «·» between; its nodes and width.
-    fn hint(&self, x: f32, y: f32, parts: &[(K, T)]) -> (Vec<Node>, f32) {
+    fn hint(&self, x: f32, y: f32, parts: &[(K, &str)]) -> (Vec<Node>, f32) {
         const FONT: f32 = 22.0;
         const LINE: f32 = 34.0;
         let mut nodes = Vec::new();
@@ -154,7 +150,7 @@ impl View<'_> {
                     at += 20.0;
                 }
             }
-            let what = format!(" {}", self.w(*what));
+            let what = format!(" {what}");
             nodes.push(text(at, y, LINE, FONT, &what, DIM, Align::Left));
             at += self.width(FONT, &what);
         }
@@ -196,7 +192,7 @@ impl View<'_> {
     }
 
     /// A chip holding a hint line.
-    fn hint_chip(&self, x: f32, y: f32, parts: &[(K, T)]) -> Vec<Node> {
+    fn hint_chip(&self, x: f32, y: f32, parts: &[(K, &str)]) -> Vec<Node> {
         let (mut nodes, w) = self.hint(x + 18.0, y + 8.0, parts);
         nodes.insert(0, rect(x, y, w + 36.0, 50.0, 10.0, PANEL));
         nodes
@@ -220,7 +216,8 @@ impl View<'_> {
                     Screen::Menu => nodes.push(self.panel()),
                     Screen::Slider { item, .. } => nodes.push(self.slider(*item)),
                     Screen::Place(_) => {
-                        let parts = [(K::S("▲▼"), text::H_MOVE), (K::S("▶"), text::H_PUT), (K::S("◀"), text::H_CANCEL)];
+                        let k = &self.w().keys;
+                        let parts = [(K::S("▲▼"), k.shift), (K::S("▶"), k.put), (K::S("◀"), k.cancel)];
                         nodes.push(group("place", Some(MENU), Anchor::BottomLeft, Space::Screen, 32.0, -82.0, self.hint_chip(0.0, 0.0, &parts)));
                     }
                     _ => {}
@@ -230,7 +227,7 @@ impl View<'_> {
         if let Some(Toast { msg: m, .. }) = &st.toast {
             // a line a chip, the chips one panel: the widest sets its width, the lines below raise it; a line wider than
             // the screen leaves is broken after a comma
-            let s = m.say(self.lang());
+            let s = m.say(self.core.st.own.lang);
             let lines = self.wrap(&s, TOAST_W);
             let extra = 40.0 * (lines.len() - 1) as f32;
             let mut c = Vec::new();
@@ -308,15 +305,15 @@ impl View<'_> {
             list.push(vec![(f, TEXT)]);
         }
         match st.freeze {
-            Freeze::Frozen(_) => list.push(vec![(self.w(text::FROZEN).into(), AMBER)]),
-            Freeze::Compare(_) => list.push(vec![(self.w(text::COMPARE).into(), AMBER)]),
+            Freeze::Frozen(_) => list.push(vec![(self.w().frozen.into(), AMBER)]),
+            Freeze::Compare(_) => list.push(vec![(self.w().compare.into(), AMBER)]),
             Freeze::Off => {}
         }
         if on("exposure-lock") {
-            list.push(vec![(self.w(text::AE_LOCKED).into(), AMBER)]);
+            list.push(vec![(self.w().ae_locked.into(), AMBER)]);
         }
         if on("white-balance-lock") {
-            list.push(vec![(self.w(text::WB_LOCKED).into(), AMBER)]);
+            list.push(vec![(self.w().wb_locked.into(), AMBER)]);
         }
         if st.cam.running.record.as_ref().is_some_and(|r| r.state != RecordState::Stopping) {
             list.push(vec![("● ".into(), RED), (text::clock(core.record_now() / 1000), TEXT)]);
@@ -369,8 +366,9 @@ impl View<'_> {
             }
             y += 24.0 + tall;
         }
-        let back = if st.menu.len() > 1 { text::H_BACK } else { text::H_CLOSE };
-        let (h, _) = self.hint(28.0, y + 8.0, &[(K::S("▲▼"), text::H_CHOOSE), (K::S("▶"), text::H_ENTER), (K::S("◀"), back)]);
+        let k = &self.w().keys;
+        let back = if st.menu.len() > 1 { k.back } else { k.close };
+        let (h, _) = self.hint(28.0, y + 8.0, &[(K::S("▲▼"), k.choose), (K::S("▶"), k.enter), (K::S("◀"), back)]);
         c.extend(h);
         y += 8.0 + 34.0 + 12.0;
         c.insert(0, rect(0.0, 0.0, W, y, 16.0, PANEL));
@@ -392,17 +390,18 @@ impl View<'_> {
         let bar = W - 56.0;
         let mut c = vec![
             rect(0.0, 0.0, W, H, 16.0, PANEL),
-            text(28.0, 16.0, 44.0, 28.0, self.w(item.name()), TEXT, Align::Left),
+            text(28.0, 16.0, 44.0, 28.0, (self.w().item)(item).name, TEXT, Align::Left),
             text(W - 28.0, 16.0, 44.0, 34.0, &self.core.number(item).unwrap_or_default(), AMBER, Align::Right),
             rect(28.0, 74.0, bar, 10.0, 0.0, RULE),
             rect(28.0, 74.0, bar * at(int(ctl.map(|c| &c.value))), 10.0, 0.0, AMBER),
             rect(28.0 + bar * at(int(ctl.map(|c| &c.default))) - 1.0, 66.0, 2.0, 26.0, 0.0, TEXT),
         ];
-        let mut parts = vec![(K::S("◀ ▶"), text::H_VALUE)];
+        let k = &self.w().keys;
+        let mut parts = vec![(K::S("◀ ▶"), k.value)];
         if self.core.near_count(item) > 1 {
-            parts.push((K::S("▲▼"), text::H_SETTING));
+            parts.push((K::S("▲▼"), k.setting));
         }
-        parts.push((K::S("MENU"), text::H_DONE));
+        parts.push((K::S("MENU"), k.done));
         c.extend(self.hint(28.0, 100.0, &parts).0);
         group("slider", Some(MENU), Anchor::BottomLeft, Space::Screen, 32.0, -32.0 - H, c)
     }
@@ -465,12 +464,12 @@ impl View<'_> {
             nodes.push(group("strip", None, Anchor::TopLeft, Space::Screen, 0.0, 0.0, c));
         }
         let name = file(g.at).map_or(String::new(), |f| f.name.clone());
-        let label = format!("{name} · {} {} {total}", g.at + 1, self.w(text::OF));
+        let label = format!("{name} · {}", (self.w().of)(&(g.at + 1).to_string(), &total.to_string()));
         let mut chip: Vec<(&str, &str)> = vec![(&label, TEXT)];
         let paused = playing && core.st.cam.player.as_ref().is_some_and(|p| matches!(p.state, PlayerState::Paused | PlayerState::Ended));
         let (mut c, w) = self.chip(x0, 32.0, &chip);
         if paused {
-            chip = vec![(self.w(text::PAUSED), AMBER)];
+            chip = vec![(self.w().paused, AMBER)];
             c.extend(self.chip(x0 + w + 12.0, 32.0, &chip).0);
         }
         nodes.push(group("name", Some(CHIPS), Anchor::TopLeft, Space::Screen, 0.0, 0.0, c));
@@ -486,20 +485,22 @@ impl View<'_> {
                 rect(28.0, 74.0, W - 56.0, 10.0, 0.0, RULE),
                 rect(28.0, 74.0, (W - 56.0) * (ms as f32 / len.max(1) as f32).min(1.0), 10.0, 0.0, AMBER),
             ];
-            let play = if paused { text::H_GO_ON } else { text::H_PAUSE };
-            let parts = [(K::S("◀ ▶"), text::H_5S), (K::S("▶‖"), play), (K::S("▲▼"), text::H_FILE), (K::S("MENU"), text::H_TO_STRIP), (K::Gallery, text::H_TO_CAMERA)];
+            let k = &self.w().keys;
+            let play = if paused { k.go_on } else { k.pause };
+            let parts = [(K::S("◀ ▶"), k.seek), (K::S("▶‖"), play), (K::S("▲▼"), k.file), (K::S("MENU"), k.to_strip), (K::Gallery, k.to_camera)];
             c.extend(self.hint(28.0, 90.0, &parts).0);
             nodes.push(group("player", Some(MENU), Anchor::BottomLeft, Space::Screen, 32.0, -170.0, c));
         } else {
-            let parts: Vec<(K, T)> = match g.view {
+            let k = &self.w().keys;
+            let parts: Vec<(K, &str)> = match g.view {
                 GalleryView::Strip => {
-                    let mut p = vec![(K::S("▲▼"), text::H_FILE), (K::S("▶"), if chosen_video { text::H_WATCH } else { text::H_FULL }), (K::S("◀"), if g.from == Origin::Menu { text::H_TO_MENU } else { text::H_CLOSE })];
+                    let mut p = vec![(K::S("▲▼"), k.file), (K::S("▶"), if chosen_video { k.watch } else { k.full }), (K::S("◀"), if g.from == Origin::Menu { k.to_menu } else { k.close })];
                     if g.from == Origin::Menu {
-                        p.push((K::Gallery, text::H_TO_CAMERA));
+                        p.push((K::Gallery, k.to_camera));
                     }
                     p
                 }
-                _ => vec![(K::S("▲▼"), text::H_FILE), (K::S("◀"), text::H_TO_STRIP), (K::Gallery, text::H_TO_CAMERA)],
+                _ => vec![(K::S("▲▼"), k.file), (K::S("◀"), k.to_strip), (K::Gallery, k.to_camera)],
             };
             nodes.push(group("keys", Some(MENU), Anchor::BottomLeft, Space::Screen, x0, -82.0, self.hint_chip(0.0, 0.0, &parts)));
         }

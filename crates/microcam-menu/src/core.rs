@@ -11,7 +11,7 @@ use microcam_core::keys::{Key, Phase};
 use microcam_core::protocol::{Action, Card, CardInfo, Envelope, Event, Output, FilesInfo, FilesWindow, OutputInfo, PlayerInfo, PlayerState, RecordState, Request, ResCode, ResState, Response, Running, Snapshot};
 
 use crate::menu::{Entry, Item, Kind, Section, ROOT};
-use crate::text::{self, Asked, Lang, Msg, Wanted, T};
+use crate::text::{self, Asked, Lang, Msg, Wanted, Words};
 
 /// A toast's time on the screen unless its caller gives one (the mockup's).
 const TOAST_MS: u64 = 2200;
@@ -1093,13 +1093,12 @@ impl Core {
     }
 
     /// A value item's values: what each asks, its words, its own description.
-    fn values(&self, item: Item) -> Vec<(Pick, String, Option<T>)> {
-        let lang = self.st.own.lang;
-        let w = |t: T| t.get(lang).to_string();
+    fn values(&self, item: Item) -> Vec<(Pick, String, Option<&'static str>)> {
+        let w = self.words();
         match item {
-            Item::Cross => vec![(Pick::Cross(false), w(text::OFF), None), (Pick::Cross(true), w(text::ON), None)],
-            Item::Language => Lang::ALL.iter().zip(text::LANGUAGES).map(|(l, t)| (Pick::Lang(*l), w(t), None)).collect(),
-            Item::Mirror => (0..4).map(|i| (Pick::Mirror(i & 1 != 0, i & 2 != 0), w(text::MIRRORS[i]), None)).collect(),
+            Item::Cross => vec![(Pick::Cross(false), w.off.into(), None), (Pick::Cross(true), w.on.into(), None)],
+            Item::Language => Lang::ALL.iter().map(|l| (Pick::Lang(*l), l.words().name.into(), None)).collect(),
+            Item::Mirror => (0..4).map(|i| (Pick::Mirror(i & 1 != 0, i & 2 != 0), w.mirrors[i].into(), None)).collect(),
             // which output gives way to the other: the precedence with USB or HDMI the higher of the two
             Item::Priority => {
                 let Some(Value::Text(q)) = self.value("precedence") else { return Vec::new() };
@@ -1111,12 +1110,12 @@ impl Core {
                 let Some(c) = self.control(name) else { return Vec::new() };
                 match c.kind {
                     ControlKind::Bool => {
-                        let (off, on) = if item == Item::WhiteBalanceLock { (text::AUTO, text::LOCKED) } else { (text::OFF, text::ON) };
-                        vec![(Pick::Set(name, Value::Bool(false)), w(off), None), (Pick::Set(name, Value::Bool(true)), w(on), None)]
+                        let (off, on) = if item == Item::WhiteBalanceLock { (w.auto, w.locked) } else { (w.off, w.on) };
+                        vec![(Pick::Set(name, Value::Bool(false)), off.into(), None), (Pick::Set(name, Value::Bool(true)), on.into(), None)]
                     }
                     ControlKind::Int => {
                         let (lo, hi) = (c.min.unwrap_or(0), c.max.unwrap_or(0));
-                        (lo..=hi).map(|v| (Pick::Set(name, Value::Int(v)), text::LEVELS.get(v as usize).map_or(v.to_string(), |t| w(*t)), text::LEVELS_HELP.get(v as usize).copied())).collect()
+                        (lo..=hi).map(|v| (Pick::Set(name, Value::Int(v)), w.levels.get(v as usize).map_or(v.to_string(), |l| l.name.into()), w.levels.get(v as usize).map(|l| l.help))).collect()
                     }
                     // the whole order is not shown in this menu: only its HDMI/USB part, as `Priority`
                     ControlKind::Order => Vec::new(),
@@ -1125,7 +1124,7 @@ impl Core {
                         .iter()
                         // the HDMI off is not offered: it would take away the screen the menu is on
                         .filter(|v| !(item == Item::Hdmi && *v == "off" && c.value != Value::Text("off".into())))
-                        .map(|v| (Pick::Set(name, Value::Text(v.clone())), choice_word(item, v, lang), None))
+                        .map(|v| (Pick::Set(name, Value::Text(v.clone())), choice_word(item, v, w), None))
                         .collect(),
                 }
             }
@@ -1152,50 +1151,52 @@ impl Core {
         let Some(Value::Int(v)) = self.value(c) else { return None };
         Some(if item == Item::ExposureBias {
             let sign = if *v > 0 { "+" } else if *v < 0 { "−" } else { "" };
-            format!("{sign}{}.{}", v.abs() / 10, v.abs() % 10)
+            format!("{sign}{}", self.words().tenths(v.unsigned_abs()))
         } else {
             v.to_string()
         })
     }
 
     pub fn page(&self, level: Level) -> Page {
-        let lang = self.st.own.lang;
-        let w = |t: T| t.get(lang).to_string();
-        let row = |name: String, value: String, help: Option<T>, act: Option<Act>| Row { name, value, help: help.map(w), dim: false, mark: false, act };
-        let info = |name: String, value: String| Row { dim: true, ..row(name, value, None, None) };
+        let w = self.words();
+        let row = |name: &str, value: String, help: Option<&str>, act: Option<Act>| Row { name: name.into(), value, help: help.map(String::from), dim: false, mark: false, act };
+        let info = |name: &str, value: String| Row { dim: true, ..row(name, value, None, None) };
         match level {
             Level::Root => Page {
-                title: w(text::MENU),
+                title: w.menu.into(),
                 rows: ROOT
                     .iter()
                     .map(|e| match e {
-                        Entry::Section(s) => row(w(s.name()), "›".into(), Some(s.help()), Some(Act::Open(Level::Section(*s)))),
-                        Entry::Gallery => row(w(text::GALLERY), "›".into(), Some(text::GALLERY_HELP), Some(Act::Gallery)),
+                        Entry::Section(s) => {
+                            let n = (w.section)(*s);
+                            row(n.name, "›".into(), Some(n.help), Some(Act::Open(Level::Section(*s))))
+                        }
+                        Entry::Gallery => row(w.gallery.name, "›".into(), Some(w.gallery.help), Some(Act::Gallery)),
                     })
                     .collect(),
             },
-            Level::Section(s) => Page { title: w(s.name()), rows: s.items().iter().map(|i| self.item_row(*i)).collect() },
+            Level::Section(s) => Page { title: (w.section)(s).name.into(), rows: s.items().iter().map(|i| self.item_row(*i)).collect() },
             Level::Values(item) => {
                 let cur = self.current(item);
-                let rows = self.values(item).into_iter().enumerate().map(|(i, (_, word, help))| Row { mark: cur == Some(i), ..row(word, String::new(), Some(help.unwrap_or(item.help())), Some(Act::Pick(item, i))) }).collect();
-                Page { title: w(item.name()), rows }
+                let rows = self.values(item).into_iter().enumerate().map(|(i, (_, word, help))| Row { mark: cur == Some(i), ..row(&word, String::new(), Some(help.unwrap_or((w.item)(item).help)), Some(Act::Pick(item, i))) }).collect();
+                Page { title: (w.item)(item).name.into(), rows }
             }
             Level::AddLine => Page {
-                title: w(Item::AddLine.name()),
-                rows: [(text::LINE_H, Dir::H), (text::LINE_V, Dir::V)].into_iter().map(|((name, help), d)| row(w(name), String::new(), Some(help), Some(Act::Line(d)))).collect(),
+                title: (w.item)(Item::AddLine).name.into(),
+                rows: [(w.line_h, Dir::H), (w.line_v, Dir::V)].into_iter().map(|(l, d)| row(l.name, String::new(), Some(l.help), Some(Act::Line(d)))).collect(),
             },
             Level::Card => {
                 let cam = &self.st.cam;
                 let on = self.wanted_on("card-reader");
-                let reader = || row(w(text::CARD_READER), w(if on { text::ON } else { text::OFF }), Some(text::CARD_READER_HELP), Some(Act::CardReader(!on)));
+                let reader = || row(w.card_reader.name, (if on { w.on } else { w.off }).into(), Some(w.card_reader.help), Some(Act::CardReader(!on)));
                 let mut rows = match (cam.card.at, cam.card.free.zip(cam.card.total)) {
                     // the card is unmounted while it is formatted
-                    _ if cam.running.format => vec![info(w(text::CARD_STATE), w(text::CARD_FORMATTING))],
-                    (Card::None, _) => vec![info(w(text::CARD_NONE), String::new()), reader()],
-                    (Card::Host, _) => vec![info(w(text::CARD_STATE), w(text::CARD_HOST)), reader()],
-                    (Card::Unreadable, _) => vec![info(w(text::CARD_STATE), w(text::CARD_UNREADABLE)), reader()],
-                    (Card::Camera, Some((free, total))) => vec![info(w(text::CARD_FREE), format!("{} {} {}", gb(free, lang), w(text::OF), gb_unit(total, lang)))],
-                    (Card::Camera, None) => vec![info(w(text::CARD_STATE), w(text::CARD_IN))],
+                    _ if cam.running.format => vec![info(w.card_state, w.card_formatting.into())],
+                    (Card::None, _) => vec![info(w.card_none, String::new()), reader()],
+                    (Card::Host, _) => vec![info(w.card_state, w.card_host.into()), reader()],
+                    (Card::Unreadable, _) => vec![info(w.card_state, w.card_unreadable.into()), reader()],
+                    (Card::Camera, Some((free, total))) => vec![info(w.card_free, (w.of)(&gb(free, w), &gb_unit(total, w)))],
+                    (Card::Camera, None) => vec![info(w.card_state, w.card_in.into())],
                 };
                 if !cam.running.format {
                     if cam.card.at == Card::Camera {
@@ -1203,43 +1204,43 @@ impl Core {
                     }
                     // formatting takes the card from the computer as a photo does
                     if cam.card.at != Card::None {
-                        rows.push(row(w(text::FORMAT), "›".into(), Some(text::FORMAT_HELP), Some(Act::Open(Level::FormatAsk))));
+                        rows.push(row(w.format.name, "›".into(), Some(w.format.help), Some(Act::Open(Level::FormatAsk))));
                     }
                 }
-                Page { title: w(Item::Card.name()), rows }
+                Page { title: (w.item)(Item::Card).name.into(), rows }
             }
             Level::FormatAsk => Page {
-                title: w(text::FORMAT_ASK),
-                rows: vec![row(w(text::CANCEL), String::new(), Some(text::FORMAT_CANCEL_HELP), Some(Act::Back)), row(w(text::FORMAT), String::new(), Some(text::FORMAT_YES_HELP), Some(Act::Format))],
+                title: w.format_ask.into(),
+                rows: vec![row(w.cancel, String::new(), Some(w.format_cancel_help), Some(Act::Back)), row(w.format.name, String::new(), Some(w.format_yes_help), Some(Act::Format))],
             },
             Level::ResetAsk => Page {
-                title: w(text::RESET_ASK),
-                rows: vec![row(w(text::CANCEL), String::new(), Some(text::RESET_CANCEL_HELP), Some(Act::Back)), row(w(text::RESET_YES), String::new(), Some(Item::Reset.help()), Some(Act::ResetAll))],
+                title: w.reset_ask.into(),
+                rows: vec![row(w.cancel, String::new(), Some(w.reset_cancel_help), Some(Act::Back)), row(w.reset_yes, String::new(), Some((w.item)(Item::Reset).help), Some(Act::ResetAll))],
             },
             Level::About => {
                 let ours = env!("CARGO_PKG_VERSION").rsplit_once('.').map_or(env!("CARGO_PKG_VERSION"), |v| v.0);
-                let version = format!("{ours} · {}", self.st.build.clone().unwrap_or_else(|| w(text::WAITING)));
-                let hdmi = self.hdmi_timing().unwrap_or_else(|| w(text::OFF));
+                let version = format!("{ours} · {}", self.st.build.clone().unwrap_or_else(|| text::WAITING.into()));
+                let hdmi = self.hdmi_timing().unwrap_or_else(|| w.off.into());
                 let usb = match self.output(Output::Usb) {
-                    Some(o) if o.fps.is_some() => format!("{}×{} · {} {}", o.w, o.h, o.fps.unwrap_or(0), w(text::FPS)),
-                    _ => w(text::NO_STREAM),
+                    Some(o) if o.fps.is_some() => format!("{}×{} · {} {}", o.w, o.h, o.fps.unwrap_or(0), w.fps),
+                    _ => w.no_stream.into(),
                 };
-                Page { title: w(Item::About.name()), rows: vec![info(text::ABOUT_NAME.into(), version), info("HDMI".into(), hdmi), info("USB".into(), usb)] }
+                Page { title: (w.item)(Item::About).name.into(), rows: vec![info(text::ABOUT_NAME, version), info("HDMI", hdmi), info("USB", usb)] }
             }
         }
     }
 
     fn item_row(&self, item: Item) -> Row {
-        let lang = self.st.own.lang;
-        let w = |t: T| t.get(lang).to_string();
-        let help = Some(w(item.help()));
+        let w = self.words();
+        let named = (w.item)(item);
+        let (name, help) = (named.name.to_string(), Some(named.help.to_string()));
         let available = |c: &str| self.control(c).is_some_and(|c| c.available);
         match item.kind() {
-            Kind::Number(c) => Row { name: w(item.name()), value: self.number(item).unwrap_or_else(|| w(text::NO_VALUE)), help, dim: !available(c), mark: false, act: Some(Act::Slider(item)) },
+            Kind::Number(c) => Row { name, value: self.number(item).unwrap_or_else(|| text::NO_VALUE.into()), help, dim: !available(c), mark: false, act: Some(Act::Slider(item)) },
             Kind::Value => {
                 let values = self.values(item);
                 let cur = self.current(item);
-                let mut value = cur.and_then(|i| values.get(i)).map_or_else(|| w(text::NO_VALUE), |v| v.1.clone());
+                let mut value = cur.and_then(|i| values.get(i)).map_or_else(|| text::NO_VALUE.into(), |v| v.1.clone());
                 if values.len() > 2 {
                     value.push_str(" ›");
                 }
@@ -1252,7 +1253,7 @@ impl Core {
                     Item::Mirror => !(available("mirror") && available("flip")),
                     _ => item.control().is_some_and(|c| !available(c)),
                 } || act.is_none();
-                Row { name: w(item.name()), value, help, dim, mark: false, act }
+                Row { name, value, help, dim, mark: false, act }
             }
             Kind::Action => {
                 let (value, act) = match item {
@@ -1262,9 +1263,14 @@ impl Core {
                     Item::About => ("›", Act::Open(Level::About)),
                     _ => ("", Act::Do(item)),
                 };
-                Row { name: w(item.name()), value: value.into(), help, dim: false, mark: false, act: Some(act) }
+                Row { name, value: value.into(), help, dim: false, mark: false, act: Some(act) }
             }
         }
+    }
+
+    /// The words of the menu's language.
+    pub fn words(&self) -> &'static Words {
+        self.st.own.lang.words()
     }
 
     pub fn output(&self, name: Output) -> Option<&OutputInfo> {
@@ -1278,24 +1284,21 @@ impl Core {
 
     /// A chip that came for a moment, in words.
     pub fn flash_text(&self) -> Option<String> {
-        let lang = self.st.own.lang;
-        let zoom = || {
-            let z = self.zoom();
-            format!("×{}.{}", z / 10, z % 10)
-        };
+        let w = self.words();
+        let zoom = || format!("×{}", w.tenths(self.zoom().unsigned_abs()));
         Some(match &self.st.flash.as_ref()?.0 {
             Flash::Zoom => zoom(),
-            Flash::Mirror => format!("{}: {}", text::MIRROR_IS.get(lang), self.mirror_index().map_or(text::NO_VALUE, |i| text::MIRRORS[i]).get(lang)),
-            Flash::AeAuto => text::AE_AUTO.get(lang).into(),
-            Flash::WbAuto => text::WB_AUTO.get(lang).into(),
+            Flash::Mirror => format!("{}: {}", w.mirror_is, self.mirror_index().map_or(text::NO_VALUE, |i| w.mirrors[i])),
+            Flash::AeAuto => w.ae_auto.into(),
+            Flash::WbAuto => w.wb_auto.into(),
             Flash::Start => {
                 let card = &self.st.cam.card;
                 let sd = match (card.at, card.free) {
-                    (Card::Camera, Some(free)) => format!("{} {}", text::SD.get(lang), gb_unit(free, lang)),
-                    (Card::Camera, None) => text::SD.get(lang).into(),
-                    (Card::None, _) => text::NO_SD.get(lang).into(),
-                    (Card::Host, _) => text::SD_HOST.get(lang).into(),
-                    (Card::Unreadable, _) => text::SD_UNREADABLE.get(lang).into(),
+                    (Card::Camera, Some(free)) => format!("{} {}", w.sd, gb_unit(free, w)),
+                    (Card::Camera, None) => w.sd.into(),
+                    (Card::None, _) => w.no_sd.into(),
+                    (Card::Host, _) => w.sd_host.into(),
+                    (Card::Unreadable, _) => w.sd_unreadable.into(),
                 };
                 let mut parts: Vec<String> = self.hdmi_timing().into_iter().collect();
                 parts.push(zoom());
@@ -1510,11 +1513,11 @@ impl Core {
 }
 
 /// A choice control's value in words.
-fn choice_word(item: Item, v: &str, lang: Lang) -> String {
+fn choice_word(item: Item, v: &str, w: &Words) -> String {
     match (item, v) {
-        (Item::PowerLine, "off") | (Item::Hdmi, "off") => text::OFF.get(lang).into(),
-        (Item::PowerLine, hz) => format!("{hz} {}", T("Гц", "Hz").get(lang)),
-        (Item::Hdmi, "auto") => text::AUTO.get(lang).into(),
+        (Item::PowerLine, "off") | (Item::Hdmi, "off") => w.off.into(),
+        (Item::PowerLine, hz) => format!("{hz} {}", w.hz),
+        (Item::Hdmi, "auto") => w.auto.into(),
         (Item::RecordSize, "4k") => "4K".into(),
         (Item::RecordSize, p) => format!("{p}p"),
         (_, v) => v.into(),
@@ -1524,13 +1527,11 @@ fn choice_word(item: Item, v: &str, lang: Lang) -> String {
 #[cfg(test)]
 mod tests;
 
-/// Bytes as gigabytes with one decimal, the way the language writes it.
-fn gb(bytes: u64, lang: Lang) -> String {
-    let tenths = (bytes as f64 / (1u64 << 30) as f64 * 10.0).round() as u64;
-    let sep = if lang == Lang::Ru { "," } else { "." };
-    format!("{}{sep}{}", tenths / 10, tenths % 10)
+/// Bytes as gigabytes (10⁹ bytes, as a card's label counts them) with one decimal.
+fn gb(bytes: u64, w: &Words) -> String {
+    w.tenths((bytes as f64 / 1e8).round() as u64)
 }
 
-fn gb_unit(bytes: u64, lang: Lang) -> String {
-    format!("{} {}", gb(bytes, lang), text::GB.get(lang))
+fn gb_unit(bytes: u64, w: &Words) -> String {
+    format!("{} {}", gb(bytes, w), w.gb)
 }
