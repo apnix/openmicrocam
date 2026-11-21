@@ -1288,7 +1288,7 @@ impl Core {
         let zoom = || format!("×{}", w.tenths(self.zoom().unsigned_abs()));
         Some(match &self.st.flash.as_ref()?.0 {
             Flash::Zoom => zoom(),
-            Flash::Mirror => format!("{}: {}", w.mirror_is, self.mirror_index().map_or(text::NO_VALUE, |i| w.mirrors[i])),
+            Flash::Mirror => (w.mirror)(self.mirror_index().map_or(text::NO_VALUE, |i| w.mirrors[i])),
             Flash::AeAuto => w.ae_auto.into(),
             Flash::WbAuto => w.wb_auto.into(),
             Flash::Start => {

@@ -874,10 +874,12 @@ fn the_language_switches_every_word_and_is_kept() {
     let mut r = Rig::new();
     r.open(&["Система"]);
     assert_eq!(r.names(), ["Язык", "SD-карта", "Сброс настроек", "О камере"]);
-    assert_eq!(r.value("Язык"), "Русский");
+    assert_eq!(r.value("Язык"), "Русский ›");
     r.press(Right);
-    assert_eq!((r.title(), r.value("Language")), ("System".into(), "English".into()));
-    assert_eq!(r.names(), ["Language", "SD card", "Settings reset", "About the camera"]);
+    assert_eq!(r.names(), ["Русский", "English", "Polski", "Deutsch", "Français", "Español"], "each language by its own name");
+    r.keys(&[Down, Right]);
+    assert_eq!((r.title(), r.value("Language")), ("System".into(), "English ›".into()));
+    assert_eq!(r.names(), ["Language", "SD card", "Reset settings", "About the camera"]);
     assert_eq!(r.help(), "The menu's language.");
     r.press(Left);
     assert_eq!(r.names(), ["Picture", "Exposure", "Overlays", "Recording", "Gallery", "Setup", "System"]);
@@ -1573,7 +1575,7 @@ fn a_refusal_for_resources_names_what_to_turn_off_largest_first_in_both_language
     );
     assert_eq!(
         said(&mut r, Lang::En).as_deref(),
-        Some("Photo: the camera lacks the resources\nLower the HDMI mode (2160p30), stop the USB stream on the computer (3840×2160 · 45 fps), close the gallery")
+        Some("Photo: the camera is out of resources\nLower the HDMI mode (2160p30), stop the USB stream on the computer (3840×2160 · 45 fps), close the gallery")
     );
     let at = r.now;
     r.wait(5900);
@@ -1601,7 +1603,7 @@ fn a_control_refused_for_resources_says_it_the_same_way() {
     r.open(&["Установка", "Режим HDMI"]);
     r.keys(&[Down, Right]);
     assert_eq!(said(&mut r, Lang::Ru).as_deref(), Some("Режим HDMI: камере не хватает ресурсов\nОстановите запись (1440p), остановите видео (V00038.mp4)"));
-    assert_eq!(said(&mut r, Lang::En).as_deref(), Some("HDMI mode: the camera lacks the resources\nStop the recording (1440p), stop the video (V00038.mp4)"));
+    assert_eq!(said(&mut r, Lang::En).as_deref(), Some("HDMI mode: the camera is out of resources\nStop the recording (1440p), stop the video (V00038.mp4)"));
     r.press(Menu);
     r.cam.short = Some((|q| matches!(q, Request::Adjust { .. }), rec));
     r.press(ZoomIn);
@@ -1613,7 +1615,7 @@ fn a_failed_action_or_output_for_resources_says_it_the_same_way() {
     let mut r = Rig::new();
     r.event(Event::Failed { what: Action::Output(Out::Usb), code: Code::Resources, error: "e".into(), holders: vec![held(Held::Hdmi { timing: Timing::P2160_30 }, 71)] });
     assert_eq!(said(&mut r, Lang::Ru).as_deref(), Some("Поток USB: камере не хватает ресурсов\nПонизьте режим HDMI (2160p30)"));
-    assert_eq!(said(&mut r, Lang::En).as_deref(), Some("USB stream: the camera lacks the resources\nLower the HDMI mode (2160p30)"));
+    assert_eq!(said(&mut r, Lang::En).as_deref(), Some("USB stream: the camera is out of resources\nLower the HDMI mode (2160p30)"));
     r.event(Event::Failed { what: Action::Output(Out::Hdmi), code: Code::Resources, error: "e".into(), holders: vec![held(Held::Usb { codec: Codec::H264, w: 1920, h: 1080, fps: 30 }, 20)] });
     assert_eq!(said(&mut r, Lang::Ru).as_deref(), Some("Выход HDMI: камере не хватает ресурсов\nОстановите поток USB на компьютере (1920×1080 · 30 к/с)"));
     r.event(Event::Failed { what: Action::Control("record-size".into()), code: Code::Resources, error: "e".into(), holders: vec![] });
@@ -1647,7 +1649,7 @@ fn a_recording_that_failed_for_the_frozen_picture_is_asked_again_once() {
     r.press(Record);
     assert_eq!(r.asked(), [Request::Record], "no freeze now: not asked a third time");
     assert_eq!(said(&mut r, Lang::Ru).as_deref(), Some("Запись: камере не хватает ресурсов\nПонизьте режим HDMI (2160p30), остановите поток USB на компьютере (3840×2160 · 45 к/с), снимите стоп-кадр"));
-    assert_eq!(said(&mut r, Lang::En).as_deref(), Some("Recording: the camera lacks the resources\nLower the HDMI mode (2160p30), stop the USB stream on the computer (3840×2160 · 45 fps), unfreeze the picture"));
+    assert_eq!(said(&mut r, Lang::En).as_deref(), Some("Recording: the camera is out of resources\nLower the HDMI mode (2160p30), stop the USB stream on the computer (3840×2160 · 45 fps), unfreeze the picture"));
 }
 
 #[test]
@@ -1658,7 +1660,7 @@ fn a_freeze_that_does_not_fit_beside_a_recording_is_refused_naming_it() {
     r.event(Event::Resource { id: frozen_id(1), state: ResState::Failed { code: ResCode::Resources, error: "e".into(), holders: vec![held(Held::Recording { w: 3840, h: 2160 }, 60)] } });
     assert_eq!(r.core.st.freeze, Freeze::Off);
     assert_eq!(said(&mut r, Lang::Ru).as_deref(), Some("Стоп-кадр: камере не хватает ресурсов\nОстановите запись (4K)"));
-    assert_eq!(said(&mut r, Lang::En).as_deref(), Some("Frozen: the camera lacks the resources\nStop the recording (4K)"));
+    assert_eq!(said(&mut r, Lang::En).as_deref(), Some("Frozen: the camera is out of resources\nStop the recording (4K)"));
 }
 
 #[test]
@@ -1700,7 +1702,7 @@ fn the_menu_missing_on_an_output_is_said_once_until_it_presents_there_again() {
     assert!(r.toast().is_none(), "an output that cannot carry the menu leaves the user nothing to do");
     r.event(not_shown(4, Code::Resources));
     assert_eq!(said(&mut r, Lang::Ru).as_deref(), Some("Меню на HDMI: камере не хватает ресурсов\nОстановите поток USB на компьютере (3840×2160 · 45 к/с)"));
-    assert_eq!(said(&mut r, Lang::En).as_deref(), Some("The menu on HDMI: the camera lacks the resources\nStop the USB stream on the computer (3840×2160 · 45 fps)"));
+    assert_eq!(said(&mut r, Lang::En).as_deref(), Some("The menu on HDMI: the camera is out of resources\nStop the USB stream on the computer (3840×2160 · 45 fps)"));
     r.wait(6000);
     r.event(not_shown(5, Code::Resources));
     assert!(r.toast().is_none(), "the toast's own revision not shown either: not said again");

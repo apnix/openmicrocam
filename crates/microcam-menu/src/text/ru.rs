@@ -51,7 +51,7 @@ pub const WORDS: Words = Words {
     fps: "к/с",
     hz: "Гц",
 
-    mirror_is: "Зеркало",
+    mirror,
     ae_auto: "Экспозиция: авто",
     wb_auto: "Баланс белого: авто",
     ae_locked: "Экспозиция: фиксация",
@@ -93,6 +93,10 @@ pub const WORDS: Words = Words {
 
 fn of(part: &str, whole: &str) -> String {
     format!("{part} из {whole}")
+}
+
+fn mirror(state: &str) -> String {
+    format!("Зеркало: {state}")
 }
 
 fn section(s: Section) -> Named {
@@ -140,15 +144,15 @@ fn item(i: Item) -> Named {
 fn say(m: &Msg) -> String {
     match m {
         Msg::PhotoSaved(f) => format!("Снимок сохранён · {f}"),
-        Msg::Recorded(f, s) => format!("Запись сохранена · {f} · {}", clock(*s)),
+        Msg::Recorded(f, s) => format!("Запись сохранена · {f} · {clock}", clock = clock(*s)),
         Msg::PictureReset => "Картинка: заводские значения".into(),
         Msg::LinesCleared => "Линии убраны".into(),
         Msg::Formatted => "SD-карта отформатирована".into(),
         Msg::SettingsReset => "Настройки сброшены".into(),
         Msg::NoFiles => "На карте нет снимков и видео".into(),
         Msg::Recording => "Галерея недоступна: идёт запись".into(),
-        Msg::CardOpen(what) => format!("{}: карта открыта на компьютере, извлеките её там", cannot(what)),
-        Msg::CardUnreadable(what) => format!("{}: камера не читает эту карту, отформатируйте её в меню камеры", cannot(what)),
+        Msg::CardOpen(what) => format!("{cannot}: карта открыта на компьютере, извлеките её там", cannot = cannot(what)),
+        Msg::CardUnreadable(what) => format!("{cannot}: камера не читает эту карту, отформатируйте её в меню камеры", cannot = cannot(what)),
         Msg::Card(Card::Host) => "Включён режим картридера".into(),
         Msg::Card(Card::Unreadable) => "Камера не читает эту карту: отформатируйте её в меню камеры".into(),
         Msg::Card(_) => "Нет SD-карты".into(),
@@ -168,7 +172,7 @@ fn say(m: &Msg) -> String {
                 .into_iter()
                 .map(|t| match t {
                     Todo::LowerHdmi(timing) => format!("понизьте режим HDMI ({timing})"),
-                    Todo::StopUsb { w, h, fps } => format!("остановите поток USB на компьютере ({w}×{h} · {fps} {})", WORDS.fps),
+                    Todo::StopUsb { w, h, fps } => format!("остановите поток USB на компьютере ({w}×{h} · {fps} {unit})", unit = WORDS.fps),
                     Todo::StopRecording(size) => format!("остановите запись ({size})"),
                     Todo::WaitPhoto => "дождитесь снимка".into(),
                     Todo::StopVideo(file) => format!("остановите видео ({file})"),
@@ -176,7 +180,7 @@ fn say(m: &Msg) -> String {
                     Todo::CloseGallery => "закройте галерею".into(),
                 })
                 .collect();
-            let s = format!("{head}: {}", why(Code::Resources));
+            let s = format!("{head}: {why}", why = why(Code::Resources));
             if todo.is_empty() { s } else { format!("{s}\n{}", capital(&todo.join(", "))) }
         }
         Msg::Refused(what, code) => {
@@ -185,7 +189,7 @@ fn say(m: &Msg) -> String {
                 (_, Some(c)) => why(*c),
                 (_, None) => "не получилось",
             };
-            format!("{}: {reason}", asked(what))
+            format!("{asked}: {reason}", asked = asked(what))
         }
         Msg::Failed(what, code) => {
             let head = match what {
@@ -201,7 +205,7 @@ fn say(m: &Msg) -> String {
                 Action::Control(name) => control(name),
                 Action::Output(_) => "Выход не включился",
             };
-            format!("{head}: {}", why(*code))
+            format!("{head}: {why}", why = why(*code))
         }
     }
 }

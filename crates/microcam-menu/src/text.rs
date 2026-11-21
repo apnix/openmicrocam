@@ -3,7 +3,11 @@
 //! facts in it; the menu joins words only where the languages it has join them alike — a name and its value, a number
 //! and its unit.
 
+mod de;
 mod en;
+mod es;
+mod fr;
+mod pl;
 mod ru;
 
 use crate::menu::{Item, Section};
@@ -15,16 +19,24 @@ use microcam_core::protocol::{Action, Output};
 pub enum Lang {
     Ru,
     En,
+    Pl,
+    De,
+    Fr,
+    Es,
 }
 
 impl Lang {
     /// The languages in the order the menu lists them.
-    pub const ALL: [Lang; 2] = [Lang::Ru, Lang::En];
+    pub const ALL: [Lang; 6] = [Lang::Ru, Lang::En, Lang::Pl, Lang::De, Lang::Fr, Lang::Es];
 
     pub fn words(self) -> &'static Words {
         match self {
             Lang::Ru => &ru::WORDS,
             Lang::En => &en::WORDS,
+            Lang::Pl => &pl::WORDS,
+            Lang::De => &de::WORDS,
+            Lang::Fr => &fr::WORDS,
+            Lang::Es => &es::WORDS,
         }
     }
 
@@ -113,7 +125,8 @@ pub struct Words {
     pub fps: &'static str,
     pub hz: &'static str,
 
-    pub mirror_is: &'static str,
+    /// the mirror's chip: its state named
+    pub mirror: fn(&str) -> String,
     pub ae_auto: &'static str,
     pub wb_auto: &'static str,
     pub ae_locked: &'static str,
