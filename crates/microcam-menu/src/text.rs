@@ -5,9 +5,8 @@ use microcam_core::controls::{Code, Held, Holder};
 use microcam_core::protocol::{Action, Output};
 
 /// The menu's language, kept in its record.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Lang {
-    #[default]
     Ru,
     En,
 }
