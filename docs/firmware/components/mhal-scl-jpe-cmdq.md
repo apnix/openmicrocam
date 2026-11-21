@@ -1028,6 +1028,10 @@ advance past it (`_EncBuff`). Marker-list helpers: `drv_jpegenc_marker_{init,rel
   overflow on both outputs (1080-row modes upscaled to 4K: ~1 Gpixel/s); only sensor mode 22 (10.8 µs line, 4K40) is
   clean. Frame-rate control on the SCL → DISP bind (HDMI port at 29 fps in procfs) does not reduce it [I: the SCL computes
   every input line for every enabled port].
+- **The ISP's line into the scaler**: while an output port runs 3840 wide, the shortest line the ISP can hand SCL dev 0 is
+  ~9.0–9.2 µs at 480 MHz (USB 4K alone: 9.12 µs clean, 8.93 µs `P0_FIFO_FULL`) and ~10.3 µs at 432 MHz (HDMI 2160p and
+  USB 4K: 10.39 µs clean, 10.21 µs not). 480 MHz is fclk1's highest rate, so 3840-wide modes through the scaler stop at
+  ~47–48 fps, while the ISP alone reaches ~52.9 (isp-1-hal.md §5.5).
 - **MIU arbiter** (`/sys/devices/system/miu/miu_arb0`; kernel-platform.md §12): SC0_FRM_W priority, JPE_R flow control,
   group-2/3 high-priority masks, USB20 priority / burst no-limit — no measurable effect on these limits. The group-0 HP
   mask at 0x1F202490 is 0xFFFF after boot; writing 0 brings back ~45 green frames per 10 s (a reboot restores it).

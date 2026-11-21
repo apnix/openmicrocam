@@ -519,6 +519,7 @@ w `W.00[15]` = 1, group reset 1302.09[3] (w < 4) or [4] (w ≥ 4) 0 → 1, `W.00
   `vif_chN_sensor_mask`).
 
 ### 5.5 Capabilities and chip facts [R]
+<!-- ev:isp-1-hal.5.5 -->
 | function | result |
 |---|---|
 | `DrvIsp_CheckChipCapability(w)` | eFuse words 101F.2E, 101F.26, 101F.2F, 101F.2C (via `HalIspReadRegWithBankAddr`; the fuse fields: ipl.md §7.2, §7.3): when the fuse bits say "restricted", widths > 3072 (0xC00) are refused; else any width. The 3840-wide stream opens on this camera, so the part is unrestricted [I from the live behaviour] |
@@ -540,6 +541,16 @@ ceiling for VIF, ISP or SCL; the only throughput statement is qualitative — a 
 together should not exceed 4K30 timing. [S] (SigmaStar FAE, 2023-01, SSD268G): without 3DNR and without an external
 DRAM frame buffer the ISP path delays a frame by about one line. [S] (SigmaStar FAE, 2022-02, SSD268G): the ISP
 has no fixed-pattern-noise correction — against the FPN API id 0x101A of isp-3-iq-api.md.
+
+[R] (measured on this camera: the GC8613's 4K mode, its line length changed live, a frame of 2314 lines): the ISP takes
+about one pixel per ISP clock plus ~80 clocks a line. A 3840-wide line runs clean at 9.12 µs and overflows at 9.02 µs with
+`isp_clk` at 432 MHz; with 480 MHz it runs clean at 8.20 µs (52.7 fps) and overflows at 8.11 µs. An overflow is
+`P0_FIFO_FULL` on every frame; the ISP recovers by itself once the line is long enough again. These limits hold with port
+0's realtime link into SCL dev 0 idle (no SCL output port enabled) and with port 0 disabled and port 1 writing NV12
+3840×2160 into memory: at 480 MHz port 1 then gives 52–53 frames a second, and a JPEG channel bound to it (FRAME_BASE)
+encodes 51–52 fps with none lost. With an SCL output port running 3840 wide the scaler limits first at 480 MHz
+(mhal-scl-jpe-cmdq.md §5), and 480 MHz on the ISP is then a little worse than 432 (beside HDMI 2160p and USB 4K: 9.30 µs
+clean, 9.21 µs overflowing; the reason is not known).
 
 ### 5.6 What runs on this camera [I: assembled from the code paths of §3–§5, §10 and isp-2-ispmid-mload-ispscl.md §1.1]
 - **Load**: banks 1302–134F mapped (§9); the driver thread started (§3.4); `CLK_isp` parent 1 (432 MHz) through the clk
