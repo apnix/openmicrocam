@@ -36,7 +36,7 @@ A hook is a shell command in a variable, run by `sh -c` with the settings in its
 | `MICROCAM_HOOK_STREAM_RELEASE` | before a tool opens the camera's video node itself (`cam check`, the testers, the panel rig) or reboots the camera (`cam deploy`, `boottry.sh`) | exit 0 when it freed a stream it holds (a viewer of yours): the tool then runs the restore hook when it is done |
 | `MICROCAM_HOOK_STREAM_RESTORE` | after, only when the release hook exited 0 | give the stream back; exit 0 when it is back |
 | `MICROCAM_HOOK_STATE` | by `cam state` and `cam watch`, bounded to 3 s | prints lines: `allow PID…` = processes allowed to hold the video node (others are reported as stray holders); a line starting with `⚠` = an anomaly; any other line = an extra info line |
-| `MICROCAM_HOOK_CHANGE` | before `cam deploy`, `cam sh` and `cam check`, bounded to 10 s | exit 0 lets the command run; any other exit refuses it, and the hook's output is the reason `cam` prints |
+| `MICROCAM_HOOK_CHANGE` | before `cam deploy` and `cam check`, bounded to 10 s | exit 0 lets the command run; any other exit refuses it, and the hook's output is the reason `cam` prints |
 
 ## The tools
 

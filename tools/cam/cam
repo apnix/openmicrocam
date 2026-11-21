@@ -722,7 +722,7 @@ def main():
     p.add_argument('--gone', type=float, default=30, help='seconds without the camera before it counts as gone')
     p.set_defaults(fn=cmd_watch)
     args = ap.parse_args()
-    if args.sub in ('deploy', 'sh', 'check') and (why := camlib.change_refused()):
+    if args.sub in ('deploy', 'check') and (why := camlib.change_refused()):
         print(f'cam {args.sub}: {why}', file=sys.stderr)
         sys.exit(3)
     try:
