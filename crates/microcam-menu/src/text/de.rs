@@ -36,10 +36,10 @@ pub const WORDS: Words = Words {
     gb: "GB",
     card_in: "in der Kamera",
     card_none: "Keine Karte",
-    card_host: "beim Computer",
+    card_host: "vom Computer belegt",
     card_unreadable: "nicht lesbar",
     card_formatting: "wird formatiert",
-    card_reader: n("Kartenleser-Modus", "Der Computer sieht die Kamera zusätzlich als Kartenleser mit dieser Karte. Solange der Modus eingeschaltet ist, gehört die Karte dem Computer."),
+    card_reader: n("Kartenleser-Modus", "Der Computer sieht die Kamera zusätzlich als Kartenleser mit dieser Karte. Solange der Modus eingeschaltet ist, kann nur der Computer auf die Karte zugreifen."),
     format: n("Formatieren", "Löscht alle Fotos und Videos von der Karte und richtet sie neu ein."),
     format_ask: "Alles auf der SD-Karte löschen?",
     format_cancel_help: "Nichts löschen.",
@@ -48,7 +48,7 @@ pub const WORDS: Words = Words {
     reset_cancel_help: "Einstellungen so lassen, wie sie sind.",
     reset_yes: "Zurücksetzen",
     no_stream: "kein Stream",
-    fps: "B/s",
+    fps: "fps",
     hz: "Hz",
 
     mirror,
@@ -81,7 +81,7 @@ pub const WORDS: Words = Words {
         full: "Vollbild",
         to_menu: "zum Menü",
         to_camera: "zur Kamera",
-        to_strip: "zur Leiste",
+        to_strip: "zur Übersicht",
         pause: "Pause",
         go_on: "fortsetzen",
         seek: "±5 s",
@@ -105,7 +105,7 @@ fn section(s: Section) -> Named {
         Section::Exposure => n("Belichtung", "Belichtungsautomatik und Weißabgleich: der Kamera überlassen, korrigieren oder sperren."),
         Section::Overlays => n("Einblendungen", "Fadenkreuz und Linien über dem Bild; auf welchen Ausgängen sie zu sehen sind."),
         Section::Recording => n("Aufnahme", "Auflösung der Videos, die die Kamera auf die SD-Karte schreibt."),
-        Section::Setup => n("Einrichtung", "Was einmal für den Arbeitsplatz eingestellt wird: Spiegelung, Stromnetz, Monitor."),
+        Section::Setup => n("Einrichtung", "Einmalige Einstellungen für den Arbeitsplatz: Spiegelung, Netzfrequenz, Monitor."),
         Section::System => n("System", "Sprache, SD-Karte, Werkseinstellungen und Infos zur Kamera."),
     }
 }
@@ -119,14 +119,14 @@ fn item(i: Item) -> Named {
         Sharpness => n("Schärfe", "Betont die Konturen. Hohe Werte erzeugen helle Säume um Leiterbahnen und Rauschen in dunklen Bereichen."),
         ResetPicture => n("Bereich zurücksetzen", "Setzt Helligkeit, Kontrast, Sättigung und Schärfe auf die Werkswerte zurück."),
         AutoExposure => n("Belichtungsautomatik", "Ein – die Kamera wählt Belichtungszeit und Verstärkung passend zum Bildinhalt. Aus – beide bleiben so, wie sie beim Ausschalten waren."),
-        ExposureBias => n("Belichtungskorrektur", "Macht das Bild heller oder dunkler, als es die Automatik wählen würde. Plus, wenn eine dunkle Platine zu dunkel erscheint; Minus, wenn Reflexe auf dem Lot zu Weiß ausbrennen. Wirkt nur bei eingeschalteter Belichtungsautomatik."),
+        ExposureBias => n("Belichtungskorrektur", "Macht das Bild heller oder dunkler, als es die Automatik wählen würde. Plus, wenn eine dunkle Platine zu dunkel erscheint; Minus, wenn Reflexe auf dem Lötzinn ausbrennen. Wirkt nur bei eingeschalteter Belichtungsautomatik."),
         ExposureLock => n("Belichtungssperre", "Hält die aktuelle Bildhelligkeit fest: Sie schwankt nicht mehr, wenn Lötkolben oder Pinzette ins Bild kommen. Dasselbe bewirkt die Taste AE auf der Fernbedienung. Nach dem Ausschalten der Kamera ist die Sperre aufgehoben."),
         WhiteBalanceLock => n("Weißabgleich", "Auto – die Kamera gleicht den Farbstich des Lichts selbst aus. Gesperrt – der aktuelle Abgleich bleibt erhalten, damit sich die Farben nicht verschieben, wenn eine Farbe das Bild beherrscht, etwa der grüne Lötstopplack einer Platine. Dasselbe bewirkt die Taste AWB auf der Fernbedienung."),
         Cross => n("Fadenkreuz", "Markierung in der Bildmitte. Dasselbe bewirkt die Taste + auf der Fernbedienung."),
         AddLine => n("Linie hinzufügen", "Eine Gerade über den ganzen Bildschirm – zum Ausrichten der Platine oder zum Vergleichen von Bauteilpositionen. Die Linie ist am Bildschirm fixiert und wandert nicht mit der Platine mit. Beliebig viele Linien sind möglich; nach dem Ausschalten der Kamera bleiben sie nicht erhalten."),
         ClearLines => n("Alle Linien entfernen", "Entfernt alle gesetzten Linien. Das Fadenkreuz bleibt."),
-        LevelHdmi => n("Auf HDMI", "Welche Einblendungen der Kamera auf dem Monitor zu sehen sind: nur das Bild, das Bild mit Fadenkreuz und Linien, zusätzlich die Statusanzeigen oder alles samt Menü."),
-        LevelUsb => n("Auf USB", "Dasselbe für das Bild, das über USB an den Computer geht."),
+        LevelHdmi => n("HDMI-Anzeige", "Welche Einblendungen der Kamera auf dem Monitor zu sehen sind: nur das Bild, das Bild mit Fadenkreuz und Linien, zusätzlich die Statusanzeigen oder alles samt Menü."),
+        LevelUsb => n("USB-Anzeige", "Dasselbe für das Bild, das über USB an den Computer geht."),
         LevelMedia => n("In Dateien", "Was in die Videos und Fotos auf der SD-Karte gelangt. Werkswert ist nur das Bild: Linien und Menü werden nicht in die Datei geschrieben."),
         RecordSize => n("Videoauflösung", "4K – 3840×2160, größere Dateien. 1080p – 1920×1080, es passt mehr auf die Karte."),
         Mirror => n("Spiegelung", "Spiegelt das Bild, wenn die Kamera verdreht über dem Tisch montiert ist. So einstellen, dass sich die Platine auf dem Bildschirm in dieselbe Richtung bewegt, in die die Hand sie schiebt. Dasselbe bewirken die Tasten ⇔ und ⇕ auf der Fernbedienung."),
@@ -151,10 +151,10 @@ fn say(m: &Msg) -> String {
         Msg::SettingsReset => "Einstellungen zurückgesetzt".into(),
         Msg::NoFiles => "Keine Fotos oder Videos auf der Karte".into(),
         Msg::Recording => "Galerie nicht verfügbar: Aufnahme läuft".into(),
-        Msg::CardOpen(what) => format!("{cannot}: Karte ist am Computer geöffnet, dort auswerfen", cannot = cannot(what)),
-        Msg::CardUnreadable(what) => format!("{cannot}: Kamera kann diese Karte nicht lesen, im Kameramenü formatieren", cannot = cannot(what)),
+        Msg::CardOpen(what) => format!("{cannot}: die Karte ist am Computer geöffnet, bitte dort auswerfen", cannot = cannot(what)),
+        Msg::CardUnreadable(what) => format!("{cannot}: die Kamera kann diese Karte nicht lesen, bitte im Kameramenü formatieren", cannot = cannot(what)),
         Msg::Card(Card::Host) => "Kartenleser-Modus ist eingeschaltet".into(),
-        Msg::Card(Card::Unreadable) => "Kamera kann diese Karte nicht lesen: im Kameramenü formatieren".into(),
+        Msg::Card(Card::Unreadable) => "Die Kamera kann diese Karte nicht lesen: bitte im Kameramenü formatieren".into(),
         Msg::Card(_) => "Keine SD-Karte".into(),
         Msg::NoFreeze => "Standbild fehlgeschlagen".into(),
         Msg::Resources(what, holders) => {
@@ -171,7 +171,7 @@ fn say(m: &Msg) -> String {
             let todo: Vec<String> = todos(holders)
                 .into_iter()
                 .map(|t| match t {
-                    Todo::LowerHdmi(timing) => format!("HDMI-Modus herabsetzen ({timing})"),
+                    Todo::LowerHdmi(timing) => format!("niedrigeren HDMI-Modus wählen ({timing})"),
                     Todo::StopUsb { w, h, fps } => format!("USB-Stream am Computer beenden ({w}×{h} · {fps} {unit})", unit = WORDS.fps),
                     Todo::StopRecording(size) => format!("Aufnahme beenden ({size})"),
                     Todo::WaitPhoto => "auf das Foto warten".into(),
@@ -240,17 +240,17 @@ fn asked(what: &Asked) -> &'static str {
 fn why(code: Code) -> &'static str {
     match code {
         Code::NoCard => "keine SD-Karte",
-        Code::CardShared => "Kartenleser-Modus ist eingeschaltet",
-        Code::CardOpen => "Karte ist am Computer geöffnet",
-        Code::CardUnreadable => "Kamera kann diese Karte nicht lesen",
-        Code::Busy => "Kamera ist noch beschäftigt",
-        Code::Playing => "Video wird abgespielt",
+        Code::CardShared => "der Kartenleser-Modus ist eingeschaltet",
+        Code::CardOpen => "die Karte ist am Computer geöffnet",
+        Code::CardUnreadable => "die Kamera kann diese Karte nicht lesen",
+        Code::Busy => "die Kamera ist noch beschäftigt",
+        Code::Playing => "ein Video wird abgespielt",
         Code::Recording => "Aufnahme läuft",
-        Code::Formatting => "Karte wird formatiert",
+        Code::Formatting => "die Karte wird formatiert",
         Code::Unavailable => "derzeit nicht verfügbar",
-        Code::Refused => "Kamera konnte es nicht ausführen",
-        Code::Resources => "Kamera hat zu wenig Ressourcen",
-        Code::Unknown | Code::Invalid => "Kamera hat es nicht angenommen",
+        Code::Refused => "die Kamera konnte es nicht ausführen",
+        Code::Resources => "der Kamera fehlen Ressourcen",
+        Code::Unknown | Code::Invalid => "die Kamera hat den Befehl abgelehnt",
     }
 }
 
@@ -281,8 +281,8 @@ fn control(name: &str) -> &'static str {
 /// Why a control cannot be changed now, from its name: the rule microcamd states in `why`, worded.
 fn unavailable(name: &str) -> Option<&'static str> {
     Some(match name {
-        "exposure-bias" | "exposure-lock" => "Belichtungsautomatik ist ausgeschaltet",
-        "white-balance-lock" => "automatischer Weißabgleich ist ausgeschaltet",
+        "exposure-bias" | "exposure-lock" => "die Belichtungsautomatik ist ausgeschaltet",
+        "white-balance-lock" => "der automatische Weißabgleich ist ausgeschaltet",
         "record-size" => "Aufnahme läuft",
         _ => return None,
     })
