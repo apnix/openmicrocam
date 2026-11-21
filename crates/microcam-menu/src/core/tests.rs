@@ -685,17 +685,17 @@ fn the_picture_key_goes_round_the_four_numbers_from_contrast() {
 fn exposure_rows_follow_what_microcamd_allows() {
     let mut r = Rig::new();
     r.open(&["Экспозиция"]);
-    assert_eq!(r.names(), ["Автоэкспозиция", "Сдвиг экспозиции", "Замок экспозиции", "Баланс белого"]);
-    assert_eq!([r.value("Автоэкспозиция"), r.value("Сдвиг экспозиции"), r.value("Замок экспозиции"), r.value("Баланс белого")], ["вкл", "0,0", "выкл", "авто"]);
+    assert_eq!(r.names(), ["Автоэкспозиция", "Коррекция экспозиции", "Фиксация экспозиции", "Баланс белого"]);
+    assert_eq!([r.value("Автоэкспозиция"), r.value("Коррекция экспозиции"), r.value("Фиксация экспозиции"), r.value("Баланс белого")], ["вкл", "0,0", "выкл", "авто"]);
     r.keys(&[Down, Right, Right, Right, Menu, Menu]);
-    assert_eq!(r.value("Сдвиг экспозиции"), "+0,6", "two steps of 0.3");
+    assert_eq!(r.value("Коррекция экспозиции"), "+0,6", "two steps of 0.3");
     r.press(Up);
     r.press(Right);
     assert!(!r.on("auto-exposure"), "a row of two values toggles in place");
     assert_eq!(r.value("Автоэкспозиция"), "выкл");
-    assert!(r.row("Сдвиг экспозиции").dim && r.row("Замок экспозиции").dim, "unavailable with the auto off");
+    assert!(r.row("Коррекция экспозиции").dim && r.row("Фиксация экспозиции").dim, "unavailable with the auto off");
     r.press(Down);
-    assert_eq!(r.chosen(), "Сдвиг экспозиции", "a dimmed row is passed over by nothing: it can be chosen…");
+    assert_eq!(r.chosen(), "Коррекция экспозиции", "a dimmed row is passed over by nothing: it can be chosen…");
     r.press(Right);
     assert_eq!(*r.screen(), Screen::Menu, "…but not entered");
     r.press(Down);
@@ -704,14 +704,14 @@ fn exposure_rows_follow_what_microcamd_allows() {
     r.keys(&[Up, Up, Right]);
     assert!(r.on("auto-exposure"));
     r.keys(&[Down, Down, Down, Right]);
-    assert_eq!(r.value("Баланс белого"), "замок");
+    assert_eq!(r.value("Баланс белого"), "фиксация");
     assert!(r.on("white-balance-lock"));
 }
 
 #[test]
 fn the_exposure_slider_alone_in_its_section_has_no_neighbours() {
     let mut r = Rig::new();
-    r.open(&["Экспозиция", "Сдвиг экспозиции"]);
+    r.open(&["Экспозиция", "Коррекция экспозиции"]);
     r.keys(&[Left, Down, Up]);
     assert_eq!(*r.screen(), Screen::Slider { item: Item::ExposureBias, round: Item::ExposureBias });
     assert_eq!(r.core.number(Item::ExposureBias).as_deref(), Some("−0,3"));
@@ -735,7 +735,7 @@ fn ae_and_awb_lock_and_unlock_with_a_chip_while_locked() {
     r.press(Right);
     r.press(Menu);
     r.press(Ae);
-    assert_eq!(r.toast().as_deref(), Some("Замок экспозиции: автоэкспозиция выключена"), "refused by microcamd, worded by the menu");
+    assert_eq!(r.toast().as_deref(), Some("Фиксация экспозиции: автоэкспозиция выключена"), "refused by microcamd, worded by the menu");
 }
 
 #[test]
@@ -762,13 +762,13 @@ fn the_mirror_keys_and_the_mirror_list_are_the_same_two_controls() {
     r.press(Mirror);
     assert_eq!(r.core.flash_text().as_deref(), Some("Зеркало: по горизонтали"));
     r.press(Flip);
-    assert_eq!(r.core.flash_text().as_deref(), Some("Зеркало: оба"));
+    assert_eq!(r.core.flash_text().as_deref(), Some("Зеркало: по обеим осям"));
     r.open(&["Установка"]);
     assert_eq!(r.names(), ["Зеркало", "Частота сети", "Формат экрана", "Режим HDMI", "Приоритет"]);
-    assert_eq!(r.value("Зеркало"), "оба ›");
+    assert_eq!(r.value("Зеркало"), "по обеим осям ›");
     r.press(Right);
-    assert_eq!((r.title(), r.chosen()), ("Зеркало".into(), "оба".into()), "the list opens at the current value");
-    assert!(r.row("оба").mark);
+    assert_eq!((r.title(), r.chosen()), ("Зеркало".into(), "по обеим осям".into()), "the list opens at the current value");
+    assert!(r.row("по обеим осям").mark);
     r.keys(&[Down, Right]);
     assert_eq!((r.on("mirror"), r.on("flip")), (false, false), "«нет»: both back");
     assert_eq!((r.title(), r.value("Зеркало")), ("Установка".into(), "нет ›".into()), "a choice goes back to the section");
@@ -826,12 +826,12 @@ fn a_line_is_put_moved_and_cancelled() {
 fn display_levels_are_a_list_of_four_with_words_of_their_own() {
     let mut r = Rig::new();
     r.open(&["Наложения"]);
-    assert_eq!(r.names(), ["Перекрестие", "Добавить линию", "Убрать все линии", "Показ на HDMI", "Показ на USB", "В записи и снимке"]);
+    assert_eq!(r.names(), ["Перекрестие", "Добавить линию", "Убрать все линии", "Показ на HDMI", "Показ на USB", "В файлах"]);
     let lvl = r.cam.list.get("level-media").unwrap().value.clone();
-    assert_eq!(r.value("В записи и снимке"), format!("{} ›", Lang::Ru.words().levels[match lvl { Value::Int(i) => i as usize, _ => 0 }].name));
+    assert_eq!(r.value("В файлах"), format!("{} ›", Lang::Ru.words().levels[match lvl { Value::Int(i) => i as usize, _ => 0 }].name));
     r.to("Показ на HDMI");
     r.press(Right);
-    assert_eq!(r.names(), ["только картинка", "с линиями", "с плашками", "всё"]);
+    assert_eq!(r.names(), ["только картинка", "с линиями", "с индикаторами", "всё"]);
     r.to("с линиями");
     assert_eq!(r.help(), "Перекрестие и линии.", "a value with its own description");
     r.press(Right);
@@ -842,11 +842,11 @@ fn display_levels_are_a_list_of_four_with_words_of_their_own() {
 #[test]
 fn the_setup_lists_are_microcamds_values() {
     let mut r = Rig::new();
-    r.open(&["Запись", "Качество видео"]);
+    r.open(&["Запись", "Разрешение видео"]);
     assert_eq!(r.names(), ["4K", "1440p", "1080p"], "microcamd offers three sizes, the mockup two");
     r.to("1080p");
     r.press(Right);
-    assert_eq!(r.value("Качество видео"), "1080p ›");
+    assert_eq!(r.value("Разрешение видео"), "1080p ›");
     r.open(&["Установка", "Частота сети"]);
     assert_eq!(r.names(), ["выкл", "50 Гц", "60 Гц"]);
     r.press(Left);
@@ -1051,7 +1051,7 @@ fn a_recording_runs_its_clock_between_events() {
     assert_eq!(r.core.record_now() / 1000, 12);
     assert_eq!(r.wake, Some(r.now + 700), "woken at the clock's next second");
     r.press(Key::Gallery);
-    assert_eq!(r.toast().as_deref(), Some("Идёт запись"), "no gallery while recording");
+    assert_eq!(r.toast().as_deref(), Some("Галерея недоступна: идёт запись"), "no gallery while recording");
     r.press(Record);
     assert_eq!(r.toast().as_deref(), Some("Запись сохранена · V00041.mp4 · 00:12"));
     assert_eq!(r.core.st.cam.running.record, None);
@@ -1240,9 +1240,9 @@ fn a_refused_set_says_what_and_why() {
     let mut r = Rig::new();
     r.event(Event::Running { running: Running { record: Some(RecordRun { file: "/mnt/VIDEO/V00041.mp4".into(), state: RecordState::Running, ms: 0 }), ..Running::default() } });
     r.cam.list.record_runs(true);
-    r.open(&["Запись", "Качество видео"]);
+    r.open(&["Запись", "Разрешение видео"]);
     r.keys(&[Down, Right]);
-    assert_eq!(r.toast().as_deref(), Some("Качество видео: идёт запись"));
+    assert_eq!(r.toast().as_deref(), Some("Разрешение видео: идёт запись"));
 }
 
 mod drawn {
@@ -1617,7 +1617,7 @@ fn a_failed_action_or_output_for_resources_says_it_the_same_way() {
     r.event(Event::Failed { what: Action::Output(Out::Hdmi), code: Code::Resources, error: "e".into(), holders: vec![held(Held::Usb { codec: Codec::H264, w: 1920, h: 1080, fps: 30 }, 20)] });
     assert_eq!(said(&mut r, Lang::Ru).as_deref(), Some("Выход HDMI: камере не хватает ресурсов\nОстановите поток USB на компьютере (1920×1080 · 30 к/с)"));
     r.event(Event::Failed { what: Action::Control("record-size".into()), code: Code::Resources, error: "e".into(), holders: vec![] });
-    assert_eq!(said(&mut r, Lang::Ru).as_deref(), Some("Качество видео: камере не хватает ресурсов"));
+    assert_eq!(said(&mut r, Lang::Ru).as_deref(), Some("Разрешение видео: камере не хватает ресурсов"));
     r.event(Event::Failed { what: Action::Photo, code: Code::Refused, error: "e".into(), holders: vec![] });
     assert_eq!(said(&mut r, Lang::Ru).as_deref(), Some("Снимок не сохранён: камера не смогла"), "other codes as before");
 }
