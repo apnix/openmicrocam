@@ -182,7 +182,7 @@ checksum = "cf8baf1c55e62ffcace7a9f06f4bd9cd3f0c4beb022d3b367256b91b87513d98"
 
 [[package]]
 name = "mi"
-version = "0.91.0"
+version = "0.92.0"
 dependencies = [
  "cc",
  "libc",
@@ -196,7 +196,7 @@ dependencies = [
 
 [[package]]
 name = "mi-sys"
-version = "0.91.0"
+version = "0.92.0"
 dependencies = [
  "bindgen",
  "libc",
@@ -204,7 +204,7 @@ dependencies = [
 
 [[package]]
 name = "microcam-cli"
-version = "0.91.0"
+version = "0.92.0"
 dependencies = [
  "libc",
  "microcam-core",
@@ -214,7 +214,7 @@ dependencies = [
 
 [[package]]
 name = "microcam-core"
-version = "0.91.0"
+version = "0.92.0"
 dependencies = [
  "serde",
  "serde_json",
@@ -224,7 +224,7 @@ dependencies = [
 
 [[package]]
 name = "microcam-draw"
-version = "0.91.0"
+version = "0.92.0"
 dependencies = [
  "microcam-core",
  "serde_json",
@@ -234,7 +234,7 @@ dependencies = [
 
 [[package]]
 name = "microcam-menu"
-version = "0.91.0"
+version = "0.92.0"
 dependencies = [
  "libc",
  "microcam-core",
@@ -244,7 +244,7 @@ dependencies = [
 
 [[package]]
 name = "microcamd"
-version = "0.91.0"
+version = "0.92.0"
 dependencies = [
  "libc",
  "log",

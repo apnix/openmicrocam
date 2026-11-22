@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/mi-sys", "crates/mi", "crates/microcam-core", "crates/microcam-draw", "crates/microcamd", "crates/microcam-cli", "crates/microcam-menu"]
 
 [workspace.package]
-version = "0.91.0"
+version = "0.92.0"
 edition = "2021"
 license = "MIT-0"
 repository = "https://github.com/apnix/openmicrocam"

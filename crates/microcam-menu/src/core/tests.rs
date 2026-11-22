@@ -1014,7 +1014,7 @@ fn about_asks_microcamd_what_runs() {
     assert_eq!(r.asked(), [Request::Status]);
     let p = r.page();
     let rows: Vec<(String, String)> = p.rows.iter().map(|r| (r.name.clone(), r.value.clone())).collect();
-    assert_eq!(rows, [("OpenMicroCam".into(), "0.91 · 524f825".into()), ("HDMI".into(), "2160p30".into()), ("USB".into(), "3840×2160 · 45 к/с".into())]);
+    assert_eq!(rows, [("OpenMicroCam".into(), "0.92 · 524f825".into()), ("HDMI".into(), "2160p30".into()), ("USB".into(), "3840×2160 · 45 к/с".into())]);
     assert!(p.rows.iter().all(|r| r.dim && r.act.is_none()));
 }
 
