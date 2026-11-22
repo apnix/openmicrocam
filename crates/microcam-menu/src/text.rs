@@ -7,6 +7,7 @@ mod de;
 mod en;
 mod es;
 mod fr;
+mod nl;
 mod pl;
 mod ru;
 
@@ -23,11 +24,12 @@ pub enum Lang {
     De,
     Fr,
     Es,
+    Nl,
 }
 
 impl Lang {
     /// The languages in the order the menu lists them.
-    pub const ALL: [Lang; 6] = [Lang::Ru, Lang::En, Lang::Pl, Lang::De, Lang::Fr, Lang::Es];
+    pub const ALL: [Lang; 7] = [Lang::Ru, Lang::En, Lang::Pl, Lang::De, Lang::Fr, Lang::Es, Lang::Nl];
 
     pub fn words(self) -> &'static Words {
         match self {
@@ -37,6 +39,7 @@ impl Lang {
             Lang::De => &de::WORDS,
             Lang::Fr => &fr::WORDS,
             Lang::Es => &es::WORDS,
+            Lang::Nl => &nl::WORDS,
         }
     }
 

@@ -876,7 +876,7 @@ fn the_language_switches_every_word_and_is_kept() {
     assert_eq!(r.names(), ["Язык", "SD-карта", "Сброс настроек", "О камере"]);
     assert_eq!(r.value("Язык"), "Русский ›");
     r.press(Right);
-    assert_eq!(r.names(), ["Русский", "English", "Polski", "Deutsch", "Français", "Español"], "each language by its own name");
+    assert_eq!(r.names(), ["Русский", "English", "Polski", "Deutsch", "Français", "Español", "Nederlands"], "each language by its own name");
     r.keys(&[Down, Right]);
     assert_eq!((r.title(), r.value("Language")), ("System".into(), "English ›".into()));
     assert_eq!(r.names(), ["Language", "SD card", "Reset settings", "About the camera"]);

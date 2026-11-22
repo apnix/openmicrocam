@@ -105,7 +105,7 @@ fn section(s: Section) -> Named {
         Section::Exposure => n("Exposure", "Automatic frame brightness and white balance: leave them to the camera, adjust them or lock them."),
         Section::Overlays => n("Overlays", "The crosshair and lines over the picture, and the outputs that show them."),
         Section::Recording => n("Recording", "The resolution of the video the camera writes to the SD card."),
-        Section::Setup => n("Setup", "Settings made once for the workstation: mirror, mains frequency, monitor."),
+        Section::Setup => n("Setup", "One-time camera settings: mirroring, mains frequency, and monitor."),
         Section::System => n("System", "Language, SD card, settings reset and information about the camera."),
     }
 }
@@ -116,12 +116,12 @@ fn item(i: Item) -> Named {
         Brightness => n("Brightness", "The picture's overall brightness. The factory value is 50."),
         Contrast => n("Contrast", "The difference between light and dark. The factory value is 50."),
         Saturation => n("Saturation", "The strength of colour: from a black-and-white picture to very vivid colours. The factory value is 50."),
-        Sharpness => n("Sharpness", "Edge enhancement. High values give a light fringe around traces and noise in dark areas."),
+        Sharpness => n("Sharpness", "Enhances edges. High values can produce light halos around details and amplify noise in dark areas."),
         ResetPicture => n("Reset section", "Returns brightness, contrast, saturation and sharpness to their factory values."),
         AutoExposure => n("Auto exposure", "On — the camera picks the exposure time and gain to suit the frame. Off — they stay as they were when it was switched off."),
         ExposureBias => n("Exposure compensation", "Makes the picture lighter or darker than auto exposure would choose. Plus when a dark board comes out too dark, minus when highlights on solder blow out to white. Works only with auto exposure on."),
         ExposureLock => n("Exposure lock", "Holds the frame's brightness as it is now: it stops drifting when a soldering iron or tweezers come into the frame. The AE key on the remote does the same. The lock is released when the camera is switched off."),
-        WhiteBalanceLock => n("White balance", "Auto — the camera removes the colour cast of the light by itself. The lock holds the balance as it is now, so the colours do not drift when much of the frame is one colour, such as a board's green solder mask. The AWB key on the remote does the same."),
+        WhiteBalanceLock => n("White balance", "Auto — the camera automatically corrects the colour cast of the lighting. Locked — the current white balance is maintained, preventing colour shifts when one colour dominates the frame, such as the green solder mask of a PCB. The AWB button on the remote does the same."),
         Cross => n("Crosshair", "A mark in the centre of the frame. The + key on the remote does the same."),
         AddLine => n("Add line", "A straight line across the whole screen — to align the board or compare the positions of parts. The line is fixed to the screen and does not move with the board. You can add any number of lines; they are not kept after power-off."),
         ClearLines => n("Remove all lines", "Removes all the lines you placed. The crosshair stays."),
@@ -133,11 +133,11 @@ fn item(i: Item) -> Named {
         PowerLine => n("Mains frequency", "The frequency of the mains that power the lighting: 50 Hz in Europe, 60 Hz in North America. With the wrong setting, dark bands run across the picture."),
         Aspect => n("Aspect ratio", "The shape of the monitor's screen. If something round looks oval on the screen, the wrong ratio is selected."),
         Hdmi => n("HDMI mode", "The resolution and refresh rate the camera sends to the monitor. Auto — the best mode the monitor reports."),
-        Priority => n("Priority", "Which output matters more. When the camera cannot serve both in full, this one keeps full quality and the other is reduced."),
+        Priority => n("Priority", "Determines which output takes priority. If the camera cannot drive both outputs at full quality, this output retains full quality while the other is reduced."),
         Language => n("Language", "The menu's language."),
         Card => n("SD card", "The card's free space, card reader mode and formatting."),
-        Reset => n("Reset settings", "Returns all settings to their factory values. Files on the SD card are not touched."),
-        About => n("About the camera", "Firmware version and the current output modes."),
+        Reset => n("Reset settings", "Restores all settings to their factory defaults. Files on the SD card are left untouched."),
+        About => n("About the camera", "Firmware version and current video output modes."),
     }
 }
 
@@ -151,7 +151,7 @@ fn say(m: &Msg) -> String {
         Msg::SettingsReset => "Settings reset".into(),
         Msg::NoFiles => "No photos or videos on the card".into(),
         Msg::Recording => "Gallery unavailable: recording in progress".into(),
-        Msg::CardOpen(what) => format!("{cannot}: the card is open on the computer, eject it there", cannot = cannot(what)),
+        Msg::CardOpen(what) => format!("{cannot}: the card is in use on the computer, eject it there first", cannot = cannot(what)),
         Msg::CardUnreadable(what) => format!("{cannot}: the camera cannot read this card, format it in the camera's menu", cannot = cannot(what)),
         Msg::Card(Card::Host) => "Card reader mode is on".into(),
         Msg::Card(Card::Unreadable) => "The camera cannot read this card: format it in the camera's menu".into(),
